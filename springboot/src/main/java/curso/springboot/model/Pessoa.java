@@ -1,6 +1,7 @@
 package curso.springboot.model;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -8,10 +9,16 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.Lob;
+import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+
+import org.springframework.format.annotation.DateTimeFormat;
 
 @Entity
 public class Pessoa implements Serializable {
@@ -33,6 +40,8 @@ public class Pessoa implements Serializable {
 	@Min(value = 18, message = "Idade inválida")
 	private int idade;
 	
+
+	
 	private String cep;
 	private String rua;
 	private String bairro;
@@ -42,8 +51,20 @@ public class Pessoa implements Serializable {
 	
 	private String sexopessoa;
 	
+	private String nomeFile;
+	private String formatoFile;
+	
+	@DateTimeFormat(pattern = "YYYY-MM-dd")
+	@Temporal(TemporalType.DATE)
+	private Date dataNascimento;
+	
 	@OneToMany(mappedBy="pessoa", orphanRemoval= true, cascade = CascadeType.ALL)
 	private List<Telefone> telefones;
+	
+	@ManyToOne
+	private Profissao profissao;
+	@Lob
+	private byte[] file;
 	
 	public void setSexopessoa(String sexopessoa) {
 		this.sexopessoa = sexopessoa;
@@ -141,5 +162,46 @@ public class Pessoa implements Serializable {
 	public void setSobrenome(String sobrenome) {
 		this.sobrenome = sobrenome;
 	}
+
+	public Profissao getProfissao() {
+		return profissao;
+	}
+
+	public void setProfissao(Profissao profissao) {
+		this.profissao = profissao;
+	}
+
+	public Date getDataNascimento() {
+		return dataNascimento;
+	}
+
+	public void setDataNascimento(Date dataNascimento) {
+		this.dataNascimento = dataNascimento;
+	}
+
+	public byte[] getFile() {
+		return file;
+	}
+
+	public void setFile(byte[] file) {
+		this.file = file;
+	}
+
+	public String getNomeFile() {
+		return nomeFile;
+	}
+
+	public void setNomeFile(String nomeFile) {
+		this.nomeFile = nomeFile;
+	}
+
+	public String getFormatoFile() {
+		return formatoFile;
+	}
+
+	public void setFormatoFile(String formatoFile) {
+		this.formatoFile = formatoFile;
+	}
+	
 
 }

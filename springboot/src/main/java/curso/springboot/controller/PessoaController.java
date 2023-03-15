@@ -1,9 +1,12 @@
 package curso.springboot.controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,12 +19,16 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
 import curso.springboot.model.Pessoa;
 import curso.springboot.model.Telefone;
 import curso.springboot.repository.PessoaRepository;
+import curso.springboot.repository.ProfissaoRepository;
 import curso.springboot.repository.TelefoneRepository;
+import curso.springboot.service.ReportUtil;
+
 
 @Controller
 public class PessoaController{
@@ -31,6 +38,12 @@ public class PessoaController{
 	
 	@Autowired
 	private TelefoneRepository telefoneRepository; 
+	
+	@Autowired
+	private ReportUtil reportUtil;
+	
+	@Autowired
+	private ProfissaoRepository profissaoRepository;
 
 	@RequestMapping(method = RequestMethod.GET, value = "/cadastropessoa")
 	public ModelAndView inicio() {
@@ -38,11 +51,12 @@ public class PessoaController{
 		modelAndView.addObject("pessoaobj", new Pessoa());
 		Iterable<Pessoa> pessoasIt = pessoaRepository.findAll();
 		modelAndView.addObject("pessoas", pessoasIt);
+		modelAndView.addObject("profissoes",profissaoRepository.findAll());
 		return modelAndView;
 	}
 
-	@RequestMapping(method = RequestMethod.POST, value = "**/salvarpessoa")
-	public ModelAndView salvar(@Valid Pessoa pessoa, BindingResult bindingResult) {
+	@RequestMapping(method = RequestMethod.POST, value = "**/salvarpessoa", consumes = {"multipart/form-data"})
+	public ModelAndView salvar(@Valid Pessoa pessoa, BindingResult bindingResult, final MultipartFile file) throws IOException {
 		
 		pessoa.setTelefones(telefoneRepository.getTelefones(pessoa.getId()));
 		
@@ -58,7 +72,24 @@ public class PessoaController{
 			}
 			
 			modelAndView.addObject("msg", msg);
+			modelAndView.addObject("profissoes",profissaoRepository.findAll());
 			return modelAndView;
+		}
+		
+		if(file.getSize()>0) {
+			pessoa.setFile(file.getBytes());
+			pessoa.setFormatoFile(file.getContentType());
+			pessoa.setNomeFile(file.getOriginalFilename());
+		}
+		else {
+			if(pessoa.getId()!=null && pessoa.getId()>0) {
+				Pessoa fileTempo = pessoaRepository.findById(pessoa.getId()).get();
+				pessoa.setFile(fileTempo.getFile());
+				pessoa.setFormatoFile(fileTempo.getFormatoFile());
+				pessoa.setNomeFile(fileTempo.getNomeFile());
+			}
+			
+			
 		}
 		
 		pessoaRepository.save(pessoa);
@@ -78,6 +109,7 @@ public class PessoaController{
 		Iterable<Pessoa> pessoasIt = pessoaRepository.findAll();
 		andView.addObject("pessoas", pessoasIt);
 		andView.addObject("pessoaobj", new Pessoa());
+		
 		return andView;
 	}
 	
@@ -89,6 +121,7 @@ public class PessoaController{
 
 		ModelAndView modelAndView = new ModelAndView("cadastro/cadastropessoa");
 		modelAndView.addObject("pessoaobj", pessoa.get());
+		modelAndView.addObject("profissoes",profissaoRepository.findAll());
 		return modelAndView;
 		
 	}
@@ -123,6 +156,34 @@ public class PessoaController{
 		modelAndView.addObject("pessoaobj", new Pessoa());
 		return modelAndView;
 	}
+	@GetMapping("**/pesquisarpessoa")
+	public void imprimePdf(@RequestParam("nomepesquisa") String nomepesquisa, 
+			@RequestParam("pesqsexo") String pesqsexo , HttpServletRequest request ,  HttpServletResponse response) throws Exception {
+		List<Pessoa> pessoas = new ArrayList<>();
+		if(pesqsexo !=null && !pesqsexo.isEmpty() && nomepesquisa !=null && !nomepesquisa.isEmpty()) {
+			pessoas = pessoaRepository.findPessoaByNameSexo(nomepesquisa, pesqsexo);
+		}
+		else if(nomepesquisa!=null && !nomepesquisa.isEmpty()) {
+			pessoas = pessoaRepository.findPessoaByName(nomepesquisa);
+		}
+		else if(pesqsexo!=null && !pesqsexo.isEmpty()) {
+			pessoas = pessoaRepository.findPessoaBySexo(pesqsexo);
+		}
+		else {
+			Iterable<Pessoa>iterator = pessoaRepository.findAll();
+			for (Pessoa pessoa : iterator) {
+				pessoas.add(pessoa);
+			}
+		}
+		byte[] pdf = reportUtil.gerarRelatorio(pessoas, "pessoa", request.getServletContext());
+		response.setContentLength(pdf.length);
+		response.setContentType("application/octet-stream");
+		String headerKey = "Content-Disposition";
+		String headerValue = String.format("attachment; filename=\"%s\"", "relatorio.pdf");
+		response.setHeader(headerKey, headerValue);
+		response.getOutputStream().write(pdf);
+	}
+	
 	
 	
 	@GetMapping("/telefones/{idpessoa}")
