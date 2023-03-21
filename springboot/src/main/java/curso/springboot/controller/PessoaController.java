@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.naming.spi.DirStateFactory.Result;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
@@ -15,6 +16,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
@@ -29,14 +31,22 @@ import org.springframework.web.servlet.ModelAndView;
 
 import curso.springboot.model.Pessoa;
 import curso.springboot.model.Telefone;
+import curso.springboot.model.Usuario;
 import curso.springboot.repository.PessoaRepository;
 import curso.springboot.repository.ProfissaoRepository;
 import curso.springboot.repository.TelefoneRepository;
+import curso.springboot.repository.UsuarioRepository;
 import curso.springboot.service.ReportUtil;
 
 
 @Controller
 public class PessoaController{
+	
+	@Autowired
+	BCryptPasswordEncoder passwordEncoder;
+	
+	@Autowired
+	private UsuarioRepository usuarioRepository;
 
 	@Autowired
 	private PessoaRepository pessoaRepository;
@@ -49,6 +59,25 @@ public class PessoaController{
 	
 	@Autowired
 	private ProfissaoRepository profissaoRepository;
+	@RequestMapping(method = RequestMethod.GET, value = "**/cadastroUsuario")
+	public ModelAndView cadUsuario() {
+		ModelAndView modelAndView = new ModelAndView("/cadastroUsuario");
+		modelAndView.addObject("usuarioobj",new Usuario());
+		return modelAndView;
+	}
+	
+	@PostMapping("/cadastroUsuario/salvaruser")
+	public ModelAndView salvarUsuario( Usuario usuario) {
+		
+		usuario.setSenha(passwordEncoder.encode(usuario.getSenha()));
+		usuarioRepository.save(usuario);
+		ModelAndView modelAndView = new ModelAndView("/cadastroUsuario");
+		modelAndView.addObject("usuarioobj", new Usuario());
+		modelAndView.addObject("mensagem", "Registrado com Sucesso");
+		return modelAndView;
+	}
+	
+	
 
 	@RequestMapping(method = RequestMethod.GET, value = "/cadastropessoa")
 	public ModelAndView inicio() {
