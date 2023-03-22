@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="http://www.thymeleaf.org"
+xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+<meta charset="UTF-8">
+<title>JN Sistemas</title>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    
+    
+    <!-- Adicionando JQuery -->
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js"
+            integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+            crossorigin="anonymous"></script>
+
+
+</head>
+<body>
+<form action="salvareditado" id="formuser" method="post" th:object="${userobj}" class="col s12">
+<div class="row">
+				<div class="input-fiel col s6">
+					<label for="id" class="active">ID</label> 
+					    <input name="id" th:field="*{id}" id="id"
+						readonly="readonly">
+				</div>
+				</div>
+<div class="row">
+				<div class="input-fiel col s6">
+					<label for="login" class="active">Login</label> 
+					    <input name="login" th:field="*{login}" id="login"
+						>
+				</div>
+				</div>
+<div class="input-field col s6">
+				 <label for="roles" class="active">Hierarquia</label>
+				 <select class="browser-default" th:field="*{roles}" id="roles">
+				   <option value="" disabled selected>--[Selecione]--</option>
+				   <option th:each = "p : ${roles}" th:value="${p.id}" th:text="${p.nomeRole}"/>
+				   
+				 </select>
+				</div>
+
+<div class="row">
+				<div class="input-field col s6">
+					<input class="waves-effect waves-light btn" type="submit"
+						value="Salvar">
+						</div>
+						<div class="input-field col s6">
+						<a href="/cadastropessoa">Voltar</a>
+						
+						</div>
+						
+						
+						</div>
+
+
+
+</form>
+
+
+ <table class="striped">
+  <thead>
+    <tr>
+     <th>ID</th>
+     <th>Login</th>
+     <th>Editar</th>
+     <th>Excluir</th>
+    </tr>
+  </thead>
+  <tr th:each = "usuario : ${usuario}">
+   <td th:text = "${usuario.id}"></td>
+    <td th:text = "${usuario.login}"></td>
+    <td><a th:href="@{/editarusuario/{idusuario}(idusuario=${usuario.id})}">Editar</a> </td>
+   <td><a th:href="@{/removerusuario/{idusuario}(idusuario=${usuario.id})}">Excluir</a> </td>
+  </tr>
+  
+						
+				
+  
+ </table>
+
+
+</body>
+</html>
